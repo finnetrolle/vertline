@@ -2,7 +2,7 @@ package ru.finnetrolle.vertline;
 
 import org.springframework.stereotype.Component;
 import ru.finnetrolle.vertline.pipeline.Context;
-import ru.finnetrolle.vertline.pipeline.Executable;
+import ru.finnetrolle.vertline.pipeline.Action;
 import ru.finnetrolle.vertline.pipeline.Pipeline;
 
 import javax.annotation.PostConstruct;
@@ -32,7 +32,7 @@ public class Example {
         System.out.println(ctx);
     }
 
-    static class Writer implements Executable<Integer, String> {
+    static class Writer implements Action<Integer, String> {
 
         @Override
         public String execute(Integer in, Context ctx) {
@@ -45,7 +45,7 @@ public class Example {
         }
     }
 
-    static class DayExtractor implements Executable<LocalDate, Integer> {
+    static class DayExtractor implements Action<LocalDate, Integer> {
 
         @Override
         public Integer execute(LocalDate in, Context ctx) {
@@ -55,7 +55,7 @@ public class Example {
         }
     }
 
-    static class DateParser implements Executable<String, LocalDate> {
+    static class DateParser implements Action<String, LocalDate> {
 
         @Override
         public LocalDate execute(String in, Context ctx) {

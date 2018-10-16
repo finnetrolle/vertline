@@ -8,14 +8,12 @@ public class ActionBuilder<TO, PI, PO> {
         this.pipeline = pipeline;
     }
 
-    public <NEW_TO> ActionBuilder<NEW_TO, PI, PO> emit(Executable<TO, NEW_TO> executable) {
-        Action<TO, NEW_TO> action = new Action<>(executable);
+    public <NEW_TO> ActionBuilder<NEW_TO, PI, PO> emit(Action<TO, NEW_TO> action) {
         this.pipeline.addAction(action);
         return new ActionBuilder<>(this.pipeline);
     }
 
-    public Pipeline<PI, PO> finish(Executable<TO, PO> executable) {
-        Action<TO, PO> action = new Action<>(executable);
+    public Pipeline<PI, PO> finish(Action<TO, PO> action) {
         this.pipeline.addAction(action);
         return pipeline;
     }

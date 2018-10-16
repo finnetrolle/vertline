@@ -4,17 +4,16 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class Pipeline<I,O> implements Executable<I,O> {
+public class Pipeline<I,O> implements Action<I,O> {
 
-    private List<Executable> actions = new ArrayList<>();
+    private List<Action> actions = new ArrayList<>();
 
-    public <TO> ActionBuilder<TO, I, O> emit(Executable<I, TO> executable) {
-        this.addAction(new Action<>(executable));
+    public <TO> ActionBuilder<TO, I, O> emit(Action<I, TO> action) {
+        this.addAction(action);
         return new ActionBuilder<>(this);
     }
 
-    public Pipeline<I, O> finish(Executable<I, O> executable) {
-        Action<I, O> action = new Action<>(executable);
+    public Pipeline<I, O> finish(Action<I, O> action) {
         this.addAction(action);
         return this;
     }
@@ -32,7 +31,7 @@ public class Pipeline<I,O> implements Executable<I,O> {
         if (actions.isEmpty()) {
             throw new RuntimeException("Empty pipeline");
         }
-        Iterator<Executable> iterator = actions.iterator();
+        Iterator<Action> iterator = actions.iterator();
         Object result = iterator.next().execute(in, context);
         while (iterator.hasNext()) {
             result = iterator.next().execute(result, context);
