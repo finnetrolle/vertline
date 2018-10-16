@@ -1,6 +1,7 @@
 package ru.finnetrolle.vertline.pipeline;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -11,6 +12,10 @@ public class Pipeline<I,O> implements Action<I,O> {
     public <TO> ActionBuilder<TO, I, O> emit(Action<I, TO> action) {
         this.addAction(action);
         return new ActionBuilder<>(this);
+    }
+
+    public <LIST_TO> SplitBuilder<I, LIST_TO, I, O> split(Action<I, LIST_TO>... flows) {
+        return new SplitBuilder<>(Arrays.asList(flows), this);
     }
 
     public Pipeline<I, O> finish(Action<I, O> action) {

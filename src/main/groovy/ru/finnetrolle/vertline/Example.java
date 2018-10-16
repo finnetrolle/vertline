@@ -3,11 +3,15 @@ package ru.finnetrolle.vertline;
 import org.springframework.stereotype.Component;
 import ru.finnetrolle.vertline.pipeline.Context;
 import ru.finnetrolle.vertline.pipeline.Action;
+import ru.finnetrolle.vertline.pipeline.Joiner;
 import ru.finnetrolle.vertline.pipeline.Pipeline;
+
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class Example {
@@ -15,21 +19,57 @@ public class Example {
     @PostConstruct
     public void init() {
 
-        Pipeline<String, String> pipeline = Pipeline.define(String.class, String.class)
+        Pipeline<String, String> pipe = Pipeline.define(String.class, String.class)
                 .emit(new DateParser())
-                .emit(new DayExtractor())
-                .emit(new Writer())
-                .finish(Pipeline.define(String.class, String.class)
-                        .finish((s, z) -> {
-                            String ss = "-="+s+"=-";
-                            z.set("lambda", ss);
-                            return ss;
-                        }));
+                .split(
+                        (a,b) -> {int v = a.getDayOfMonth(); b.set("day", v); return v;},
+                        (a,b) -> {int v = a.getMonthValue(); b.set("month", v); return v;},
+                        (a,b) -> {int v = a.getYear(); b.set("year", v); return v;})
+                .joinWith(new SuperJoiner())
+                .finish(new Skobochker());
+
+
+
+//        Pipeline<String, String> pipeline = Pipeline.define(String.class, String.class)
+//                .emit(new DateParser())
+//                .emit(new DayExtractor())
+//                .emit(new Writer())
+//                .finish(Pipeline.define(String.class, String.class)
+//                        .finish((s, z) -> {
+//                            String ss = "-="+s+"=-";
+//                            z.set("lambda", ss);
+//                            return ss;
+//                        }));
+
+//        Pipeline.define(String.class, String.class)
+//                .emit(SplitJoin.define(String.class, String.class)
+//                        .split(
+//                            new DateParser(),
+//                            new DateParser(),
+//                            new DateParser()
+//                ).joinWith(joiner));
 
         Context ctx = new Context();
-        System.out.println(pipeline.execute("2018.12.05", ctx));
+        System.out.println(pipe.execute("2018.12.05", ctx));
 
         System.out.println(ctx);
+    }
+
+    static class SuperJoiner implements Joiner<Integer, String> {
+
+        @Override
+        public String join(List<Integer> results, Context context) {
+            context.set("joiner", results);
+            return results.stream().map(String::valueOf).collect(Collectors.joining(","));
+        }
+    }
+
+    static class Skobochker implements Action<String, String> {
+
+        @Override
+        public String execute(String in, Context context) {
+            return "-= " + in + " =-";
+        }
     }
 
     static class Writer implements Action<Integer, String> {
@@ -54,6 +94,7 @@ public class Example {
             return v;
         }
     }
+
 
     static class DateParser implements Action<String, LocalDate> {
 
