@@ -20,7 +20,7 @@ public class ActionBuilder<TO, PI, PO> {
         return pipeline;
     }
 
-    public <LIST_TO> SplitBuilder<TO, LIST_TO, PI, PO> split(Action<TO, LIST_TO>... flows) {
-        return new SplitBuilder<>(Arrays.asList(flows), this.pipeline);
+    public <LIST_TO> SplitBuilder<TO, LIST_TO, PI, PO> split(ArrayOfActionsBuilder<TO, LIST_TO> arrayOfActionsBuilder) {
+        return new SplitBuilder<>(arrayOfActionsBuilder.actions, this.pipeline);
     }
 }

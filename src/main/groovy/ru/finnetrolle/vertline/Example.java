@@ -1,10 +1,7 @@
 package ru.finnetrolle.vertline;
 
 import org.springframework.stereotype.Component;
-import ru.finnetrolle.vertline.pipeline.Context;
-import ru.finnetrolle.vertline.pipeline.Action;
-import ru.finnetrolle.vertline.pipeline.Joiner;
-import ru.finnetrolle.vertline.pipeline.Pipeline;
+import ru.finnetrolle.vertline.pipeline.*;
 
 
 import javax.annotation.PostConstruct;
@@ -19,27 +16,45 @@ public class Example {
     @PostConstruct
     public void init() {
 
-        Pipeline<String, String> pipe = Pipeline.define(String.class, String.class)
-                .emit(new DateParser())
-                .split(
-                        (a,b) -> {int v = a.getDayOfMonth(); b.set("day", v); return v;},
-                        (a,b) -> {int v = a.getMonthValue(); b.set("month", v); return v;},
-                        (a,b) -> {int v = a.getYear(); b.set("year", v); return v;})
-                .joinWith(new SuperJoiner())
-                .finish(new Skobochker());
-
-
-
-//        Pipeline<String, String> pipeline = Pipeline.define(String.class, String.class)
+//        Pipeline<String, String> pipe = Pipeline.define(String.class, String.class)
 //                .emit(new DateParser())
-//                .emit(new DayExtractor())
-//                .emit(new Writer())
-//                .finish(Pipeline.define(String.class, String.class)
-//                        .finish((s, z) -> {
-//                            String ss = "-="+s+"=-";
-//                            z.set("lambda", ss);
-//                            return ss;
-//                        }));
+//                .splitTo((a,b) -> {int v = a.getDayOfMonth(); b.set("day", v); return v;})
+//                .andTo((a,b) -> {int v = a.getMonthValue(); b.set("month", v); return v;})
+//                .andTo((a,b) -> {int v = a.getYear(); b.set("year", v); return v;})
+//                .joinWith(new SuperJoiner())
+//                .finish(new Skobochker());
+
+//        Pipeline<String, String> pipe = Pipeline.define(String.class, String.class)
+//                .emit(new DateParser())
+//                .split(SplitBuilder
+//                        .to((a,b) -> {int v = a.getDayOfMonth(); b.set("day", v); return v;})
+//                        .to((a,b) -> {int v = a.getMonthValue(); b.set("month", v); return v;})
+//                        .to((a,b) -> {int v = a.getYear(); b.set("year", v); return v;})
+//                ).joinWith(new SuperJoiner())
+//                .finish(new Skobochker());
+
+//        SplitBuilder.to((a,b) -> {int v = a.getDayOfMonth(); b.set("day", v); return v;})
+//                .to((a,b) -> {int v = a.getDayOfMonth(); b.set("day", v); return v;})
+//
+//
+//        Pipeline<String, String> pipe = Pipeline.define(String.class, String.class)
+//                .emit(new DateParser())
+//                .split(
+//                        new ArrayOfActionsBuilder<LocalDate, Integer>((a,b) -> {int v = a.getDayOfMonth(); b.set("day", v); return v;})
+//
+//                ).joinWith(new SuperJoiner())
+//                .finish(new Skobochker());
+
+        Pipeline<String, String> pipeline = Pipeline.define(String.class, String.class)
+                .emit(new DateParser())
+                .emit(new DayExtractor())
+                .emit(new Writer())
+                .finish(Pipeline.define(String.class, Integer.class)
+                        .finish((s, z) -> {
+                            String ss = "-="+s+"=-";
+                            z.set("lambda", ss);
+                            return ss.length();
+                        }));
 
 //        Pipeline.define(String.class, String.class)
 //                .emit(SplitJoin.define(String.class, String.class)
