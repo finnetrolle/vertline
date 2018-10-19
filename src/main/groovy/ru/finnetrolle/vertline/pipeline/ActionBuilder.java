@@ -1,7 +1,5 @@
 package ru.finnetrolle.vertline.pipeline;
 
-import java.util.Arrays;
-
 public class ActionBuilder<TO, PI, PO> {
 
     private final Pipeline<PI,PO> pipeline;
@@ -20,7 +18,4 @@ public class ActionBuilder<TO, PI, PO> {
         return pipeline;
     }
 
-    public <LIST_TO> SplitBuilder<TO, LIST_TO, PI, PO> split(ArrayOfActionsBuilder<TO, LIST_TO> arrayOfActionsBuilder) {
-        return new SplitBuilder<>(arrayOfActionsBuilder.actions, this.pipeline);
-    }
 }

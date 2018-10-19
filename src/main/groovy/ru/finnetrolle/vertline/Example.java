@@ -3,12 +3,17 @@ package ru.finnetrolle.vertline;
 import org.springframework.stereotype.Component;
 import ru.finnetrolle.vertline.pipeline.*;
 
-
 import javax.annotation.PostConstruct;
+import javax.swing.text.DateFormatter;
+import java.text.DateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static ru.finnetrolle.vertline.pipeline.Action.pipeline;
+import static ru.finnetrolle.vertline.pipeline.Action.split;
 
 @Component
 public class Example {
@@ -16,58 +21,77 @@ public class Example {
     @PostConstruct
     public void init() {
 
-//        Pipeline<String, String> pipe = Pipeline.define(String.class, String.class)
-//                .emit(new DateParser())
-//                .splitTo((a,b) -> {int v = a.getDayOfMonth(); b.set("day", v); return v;})
-//                .andTo((a,b) -> {int v = a.getMonthValue(); b.set("month", v); return v;})
-//                .andTo((a,b) -> {int v = a.getYear(); b.set("year", v); return v;})
-//                .joinWith(new SuperJoiner())
-//                .finish(new Skobochker());
+        UserList list = new UserList();
+        list.users = Arrays.asList(
+                new User("Ivan", "Petrov"),
+                new User("Nick", "Pavlov"));
 
-//        Pipeline<String, String> pipe = Pipeline.define(String.class, String.class)
-//                .emit(new DateParser())
-//                .split(SplitBuilder
-//                        .to((a,b) -> {int v = a.getDayOfMonth(); b.set("day", v); return v;})
-//                        .to((a,b) -> {int v = a.getMonthValue(); b.set("month", v); return v;})
-//                        .to((a,b) -> {int v = a.getYear(); b.set("year", v); return v;})
-//                ).joinWith(new SuperJoiner())
-//                .finish(new Skobochker());
+        Pipeline<Request, byte[]> documentPipe = pipeline(Request.class, byte[].class)
+                .emit(enricher)
+                .emit(split(EnrichedSubscription.class, byte[].class)
+                        .flow(pipeline(EnrichedSubscription.class, byte[].class)
+                                .emit(documentAFactory)
+                                .finish(csvRenderer))
+                        .flow(pipeline(EnrichedSubscription.class, byte[].class)
+                                .emit(documentBFactory)
+                                .emit(split(DocumentBContent.class, byte[].class)
+                                        .flow(new JasperRenderer("XLS"))
+                                        .flow(new JasperRenderer("XLSX"))
+                                        .flow(new JasperRenderer("PDF"))
+                                        .thenJoin(new Zipper("b.zip")))
+                                .finish())
+                        .thenJoin(new Zipper("out.zip")))
+                .finish();
+        byte[] out = documentPipe.emit(request, new Context());
 
-//        SplitBuilder.to((a,b) -> {int v = a.getDayOfMonth(); b.set("day", v); return v;})
-//                .to((a,b) -> {int v = a.getDayOfMonth(); b.set("day", v); return v;})
-//
-//
-//        Pipeline<String, String> pipe = Pipeline.define(String.class, String.class)
-//                .emit(new DateParser())
-//                .split(
-//                        new ArrayOfActionsBuilder<LocalDate, Integer>((a,b) -> {int v = a.getDayOfMonth(); b.set("day", v); return v;})
-//
-//                ).joinWith(new SuperJoiner())
-//                .finish(new Skobochker());
 
-        Pipeline<String, String> pipeline = Pipeline.define(String.class, String.class)
-                .emit(new DateParser())
-                .emit(new DayExtractor())
-                .emit(new Writer())
-                .finish(Pipeline.define(String.class, Integer.class)
-                        .finish((s, z) -> {
-                            String ss = "-="+s+"=-";
-                            z.set("lambda", ss);
-                            return ss.length();
-                        }));
+        Pipeline<String, String> pipe = pipeline(String.class, String.class)
+                .emit((s,ctx) -> LocalDate.parse(s, DateTimeFormatter.ofPattern("yyyy.MM.dd")))
+                .emit(split(LocalDate.class, String.class)
+                        .flow((s,ctx) -> s.getDayOfMonth())
+                        .flow((s,ctx) -> s.getMonthValue())
+                        .flow((s,ctx) -> s.getYear())
+                        .thenJoin((lst,ctx) -> lst.stream().map(String::valueOf).collect(Collectors.joining("."))))
+                .finish((s,ctx) -> "'" + s + "'");
 
-//        Pipeline.define(String.class, String.class)
-//                .emit(SplitJoin.define(String.class, String.class)
-//                        .split(
-//                            new DateParser(),
-//                            new DateParser(),
-//                            new DateParser()
-//                ).joinWith(joiner));
+        String result = pipe.execute("2018.01.01", new Context());
+        System.out.println(result);
+
+
+        Pipeline<String, String> pipeline = pipeline(String.class, String.class)
+                .emit((s,ctx) -> LocalDate.parse(s, DateTimeFormatter.ofPattern("yyyy.MM.dd")))
+                .emit(split(LocalDate.class, String.class)
+                        .flow((s, ctx) -> s.getDayOfMonth())
+                        .flow((s, ctx) -> s.getMonthValue())
+                        .flow(split(LocalDate.class, Integer.class)
+                                .flow((s, ctx) -> s.getDayOfWeek().getValue())
+                                .flow((s, ctx) -> s.getMonthValue() - 1)
+                                .thenJoin((in, ctx) -> in.stream().reduce((a, b) -> a + b).get()))
+                        .flow((s, ctx) -> s.getYear())
+                        .flow(pipeline(LocalDate.class, Integer.class)
+                                .emit((s, ctx) -> s.getYear() * 365 + s.getMonthValue() * 30 + s.getDayOfMonth())
+                                .finish((s, ctx) -> s += s))
+                        .thenJoin(new SuperJoiner()))
+                .finish(new Skobochker());
 
         Context ctx = new Context();
-        System.out.println(pipe.execute("2018.12.05", ctx));
+        System.out.println(pipeline.execute("2018.12.05", ctx));
 
         System.out.println(ctx);
+    }
+
+    public static class UserList {
+        List<User> users;
+    }
+
+    public static class User {
+        public String name;
+        public String surname;
+
+        public User(String name, String surname) {
+            this.name = name;
+            this.surname = surname;
+        }
     }
 
     static class SuperJoiner implements Joiner<Integer, String> {
@@ -83,7 +107,9 @@ public class Example {
 
         @Override
         public String execute(String in, Context context) {
-            return "-= " + in + " =-";
+            String out = "-= " + in + " =-";
+            context.set("skobochker", out);
+            return out;
         }
     }
 

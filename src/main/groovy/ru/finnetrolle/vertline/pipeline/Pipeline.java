@@ -12,21 +12,9 @@ public class Pipeline<I, O> implements Action<I, O> {
         return new Pipeline<>();
     }
 
-//    public <LIST_TO> SplitBuilder<I, LIST_TO, I, O> split(Action<I, LIST_TO>... flows) {
-//        return new SplitBuilder<>(Arrays.asList(flows), this);
-//    }
-
     public <TO> ActionBuilder<TO, I, O> emit(Action<I, TO> action) {
         this.addAction(action);
         return new ActionBuilder<>(this);
-    }
-
-//    public <LIST_TO> SplitBuilder<I, LIST_TO, I, O> splitTo(Action<I, LIST_TO> firstAction) {
-//        return new SplitBuilder<>(firstAction, this);
-//    }
-
-    public <LIST_TO> SplitBuilder<I, LIST_TO, I, O> split(ArrayOfActionsBuilder<I, LIST_TO> arrayOfActionsBuilder) {
-        return new SplitBuilder<>(arrayOfActionsBuilder.actions, this);
     }
 
     public Pipeline<I, O> finish(Action<I, O> action) {
