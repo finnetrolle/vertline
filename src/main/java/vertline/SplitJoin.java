@@ -91,7 +91,7 @@ public class SplitJoin<IN, SINGLE_RESULT, OUT> implements Action<IN, OUT> {
         /**
          * Определение метода, который соединит все результаты цепочек в один объект
          * @param joiner - метод для соеднинения результатов
-         * @return @SplitJoin
+         * @return объект @SplitJoin
          */
         public SplitJoin<IN, SINGLE_RESULT, OUT> thenJoin(Joiner<SINGLE_RESULT, OUT> joiner) {
             return new SplitJoin<>(joiner, actions);

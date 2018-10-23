@@ -19,7 +19,7 @@ public class Pipeline<I, O> implements Action<I, O> {
      * @param outgoingClazz - класс выходных данных
      * @param <IN> - тип входных данных
      * @param <OUT> - тип выходных данных
-     * @return
+     * @return объект @Pipeline
      */
     public static <IN, OUT> Pipeline<IN, OUT> define(Class<IN> incomingClazz, Class<OUT> outgoingClazz) {
         return new Pipeline<>();
@@ -40,7 +40,7 @@ public class Pipeline<I, O> implements Action<I, O> {
      * Добавление в @Pipeline финального действия. Отличается от добавления следующего действия тем,
      * что финальное действие должно всегда возвращать тип, который возвращает сам @Pipeline
      * @param action - финальный @Action с возвращаемым типом равным возвращаемому типу @Pipeline
-     * @return @Pipeline
+     * @return объект @Pipeline
      */
     public Pipeline<I, O> finish(Action<I, O> action) {
         this.addAction(action);

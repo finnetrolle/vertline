@@ -18,7 +18,7 @@ public class PipelineBuilder<TO, PI, PO> {
      * Добавление действия к пайплайну
      * @param action - действие @Action
      * @param <NEW_TO> - тип объекта, который возвращает @Action
-     * @return @PipelineBuilder
+     * @return билдер @PipelineBuilder
      */
     public <NEW_TO> PipelineBuilder<NEW_TO, PI, PO> emit(Action<TO, NEW_TO> action) {
         this.pipeline.addAction(action);
